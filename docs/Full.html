@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="full-documentation">Full Documentation</h1>
+<h2 id="base-url-httpspay.redoya.net">Base URL: <a href="https://pay.redoya.net">https://pay.redoya.net</a></h2>
+<h2 id="how-does-system-work">How does system work?</h2>
+<p>You create an payment link as described below. The payment link has the required information such as price, success/fail redirection URL and is in test mode for creating the payment.<br>
+<code>GET /checkout#orderToken#identifier</code><br>
+Then you redirect the user to the link. This created link is the payment page.<br>
+Then user will complete the payment in the payment page and will be redirected to the specified successful/fail URL when the payment is/(not) processed. If you need to track an invoice, you can add specific query parameters such as invoiceId to the successful URL.</p>
+<h2 id="table-of-endpoints">Table of Endpoints</h2>
+
+<table>
+<thead>
+<tr>
+<th>METHOD</th>
+<th>URL</th>
+<th>BODY PARAMS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/checkout#orderToken#identifier</td>
+<td>-</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/order/verify/:orderId</td>
+<td>identifier</td>
+</tr>
+</tbody>
+</table><h2 id="variable-definitions">Variable Definitions</h2>
+<h3 id="secret-key">Secret Key</h3>
+<p>This is a random token which is only known by <a href="http://pay.redoya.net">pay.redoya.net</a> and vendor. Used while encrypting the order data. <strong>THIS SECRET KEY WILL NEVER BE REQUESTED FROM YOU AND DO NOT SHARE THIS WITH ANYONE. If it’s stolen, open a support ticket for requesting secret change ASAP.</strong></p>
+<h3 id="identifiervendor-token">Identifier/Vendor Token</h3>
+<p>This is a public token used to identify the vendor.</p>
+<h3 id="order-token">Order Token</h3>
+<p>An encrypted string that contains specific order data as JSON. It must be encrypted with JSON Web Token, HS256.</p>
+<h3 id="order_id">{order_id}</h3>
+<p>This variable is used while creating orderData. You can use this variable to put incoming order id to anywhere you want in the successful/failed payment redirection URL. The order id is used to get the result of a payment.</p>
+<h2 id="how-to-create-an-order-token">How to create an order token?</h2>
+<p>Click for PHP example (Soon)<br>
+Click for NodeJS example (Soon)</p>
+<h2 id="api">API</h2>
+<h3 id="get-checkoutordertokenidentifier">GET /checkout#orderToken#identifier</h3>
+<p>Calculate the order token:<br>
+<strong>orderData:</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+  <span class="token string">"price"</span><span class="token punctuation">:</span> priceInt<span class="token punctuation">,</span> <span class="token comment">// min value: 3, max value: 1000</span>
+  <span class="token comment">// Float prices will be accepted in the next update.</span>
+  <span class="token string">"successfulURL"</span><span class="token punctuation">:</span> <span class="token string">"http://example.com/order/success/{order_id}?invoiceId=123"</span><span class="token punctuation">,</span>
+  <span class="token comment">// type: string, min length: 10, max length: 1200</span>
+  <span class="token string">"failURL"</span><span class="token punctuation">:</span> <span class="token string">"https://redoya.net/odeme/iptal/{order_id}?invoiceId=123"</span><span class="token punctuation">,</span>
+  <span class="token comment">// type: string, min length: 10, max length: 1200</span>
+  <span class="token string">"isInTestMode"</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token comment">// type: number (boolean is not supported yet), min: 0, max: 1</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>orderToken:</strong> <code>JWT.sign(orderData, secret, { expiresIn: secondsInt });</code><br>
+Combine the variables and create the payment link:<br>
+<strong>identifier: You must request this from Redoya.</strong><br>
+<code>https://pay.redoya.net/checkout#&lt;orderToken&gt;#&lt;identifier&gt;</code></p>
+<h3 id="post-apiv1orderverifyorderid">POST /api/v1/order/verify/:orderId</h3>
+<h2 id="request">REQUEST</h2>
+<p><strong>Body parameters/schema:</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+  <span class="token string">"identifier"</span><span class="token punctuation">:</span> <span class="token string">"You must request this from Redoya."</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="response">RESPONSE</h2>
+<p><strong>On successful payment:</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+  <span class="token string">"orderId"</span><span class="token punctuation">:</span> <span class="token string">"A string with 16 characters length."</span><span class="token punctuation">,</span>
+  <span class="token string">"status"</span><span class="token punctuation">:</span> <span class="token string">"success"</span><span class="token punctuation">,</span>
+  <span class="token string">"total_amount"</span><span class="token punctuation">:</span> <span class="token string">"Money amount withheld from the customer (includes fee etc.). String and multiplied by 100"</span><span class="token punctuation">,</span>
+  <span class="token string">"payment_type"</span><span class="token punctuation">:</span> <span class="token string">"card"</span><span class="token punctuation">,</span>
+  <span class="token string">"payment_amount"</span><span class="token punctuation">:</span> <span class="token string">"Money amount defined in the order. String and multiplied by 100"</span><span class="token punctuation">,</span>
+  <span class="token string">"currency"</span><span class="token punctuation">:</span> <span class="token string">"TL"</span><span class="token punctuation">,</span>
+  <span class="token string">"testMode"</span><span class="token punctuation">:</span> <span class="token string">"0 or 1"</span><span class="token punctuation">,</span>
+  <span class="token string">"timestamp"</span><span class="token punctuation">:</span> timestampInSecondsInt<span class="token punctuation">,</span> <span class="token comment">// Timestamp of when the payment made</span>
+  <span class="token string">"uses"</span><span class="token punctuation">:</span> countOfVerifyRequestsTheVendorHaveMadeInt<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>On failed payment:</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+  <span class="token string">"orderId"</span><span class="token punctuation">:</span> <span class="token string">"A string with 16 characters length."</span><span class="token punctuation">,</span>
+  <span class="token string">"status"</span><span class="token punctuation">:</span> <span class="token string">"failed"</span><span class="token punctuation">,</span>
+  <span class="token string">"failed_reason_code"</span><span class="token punctuation">:</span> <span class="token string">"From 0 to 99. Recieved from PayTR API."</span><span class="token punctuation">,</span>
+  <span class="token string">"failed_reason_msg"</span><span class="token punctuation">:</span> <span class="token string">"Message that contains detailed information explains why the payment not accepted."</span><span class="token punctuation">,</span>
+  <span class="token string">"total_amount"</span><span class="token punctuation">:</span> <span class="token string">"0"</span><span class="token punctuation">,</span>
+  <span class="token string">"payment_type"</span><span class="token punctuation">:</span> <span class="token string">"card"</span><span class="token punctuation">,</span>
+  <span class="token string">"testMode"</span><span class="token punctuation">:</span> <span class="token string">"0 or 1"</span><span class="token punctuation">,</span>
+  <span class="token string">"timestamp"</span><span class="token punctuation">:</span> timestampInSecondsInt<span class="token punctuation">,</span> <span class="token comment">// Timestamp of when the payment failed</span>
+  <span class="token string">"uses"</span><span class="token punctuation">:</span> countOfVerifyRequestsTheVendorHaveMadeInt<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>On error:</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+  <span class="token string">"name"</span><span class="token punctuation">:</span>  <span class="token string">"MoleculerError"</span><span class="token punctuation">,</span>
+  <span class="token string">"message"</span><span class="token punctuation">:</span>  <span class="token string">"A message that explains the error."</span><span class="token punctuation">,</span>
+  <span class="token string">"code"</span><span class="token punctuation">:</span>  <span class="token number">400</span><span class="token punctuation">,</span>
+  <span class="token string">"type"</span><span class="token punctuation">:</span>  <span class="token string">"TYPEOF_ERROR_WITH_SNAKE_CASE"</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Type</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>NOT_CONFIRMED_YET</td>
+<td>The order is not end up yet.</td>
+</tr>
+<tr>
+<td>400</td>
+<td>ORDER_TIMED_OUT</td>
+<td>It’s been a long time since the order was created.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>UNKNOWN_ORDER</td>
+<td>Order with specified ID is not found.</td>
+</tr>
+<tr>
+<td>500</td>
+<td>UNKNOWN_ERROR</td>
+<td>Unknown error! Contact the administrator.</td>
+</tr>
+</tbody>
+</table><h2 id="example-requests">Example Requests</h2>
+<h3 id="get-checkoutordertokenidentifier-1">GET /checkout#orderToken#identifier</h3>
+<p><strong>orderData:</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+  <span class="token string">"price"</span><span class="token punctuation">:</span> <span class="token number">15</span><span class="token punctuation">,</span>
+  <span class="token string">"successfulURL"</span><span class="token punctuation">:</span> <span class="token string">"https://redoya.net/odeme/basarili/{order_id}?invoiceId=123"</span><span class="token punctuation">,</span>
+  <span class="token string">"failURL"</span><span class="token punctuation">:</span> <span class="token string">"https://redoya.net/odeme/iptal/{order_id}?invoiceId=123"</span><span class="token punctuation">,</span>
+  <span class="token string">"isInTestMode"</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>orderToken:</strong> <code>JWT.sign(orderData, secret, { expiresIn: 15 * 60 });</code><br>
+<strong>orderToken:</strong> <code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4</code><br>
+<strong>identifier/vendorToken:</strong> <code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDExNjE3NywiZXhwIjoxNjI3ODkyMTc3fQ.JFN1tDGnYfdz3RWQntGsl9wD8LgVXQ0WpgbverD3SCg</code><br>
+<strong>With this variables, the link will be:</strong> <a href="https://pay.redoya.net/checkout#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcmljZSI6MTUsInN1Y2Nlc3NmdWxVUkwiOiJodHRwczovL3JlZG95YS5uZXQvb2RlbWUvYmFzYXJpbGkve29yZGVyX2lkfT9pbnZvaWNlSWQ9MTIzIiwiZmFpbFVSTCI6Imh0dHBzOi8vcmVkb3lhLm5ldC9vZGVtZS9pcHRhbC97b3JkZXJfaWR9P2ludm9pY2VJZD0xMjMiLCJpc0luVGVzdE1vZGUiOjEsImlhdCI6MTYyMDIwNTMxMn0.Bs91gdIkOPuvIVe1owxoSrrolSUdgJwHbaYqrmu47gM#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4">https://pay.redoya.net/checkout#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcmljZSI6MTUsInN1Y2Nlc3NmdWxVUkwiOiJodHRwczovL3JlZG95YS5uZXQvb2RlbWUvYmFzYXJpbGkve29yZGVyX2lkfT9pbnZvaWNlSWQ9MTIzIiwiZmFpbFVSTCI6Imh0dHBzOi8vcmVkb3lhLm5ldC9vZGVtZS9pcHRhbC97b3JkZXJfaWR9P2ludm9pY2VJZD0xMjMiLCJpc0luVGVzdE1vZGUiOjEsImlhdCI6MTYyMDIwNTMxMn0.Bs91gdIkOPuvIVe1owxoSrrolSUdgJwHbaYqrmu47gM#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4</a></p>
+</div>
+</body>
+
+</html>

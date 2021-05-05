@@ -1,2 +1,6 @@
 # docs.pay.redoya
-Documentation to implement your web app to Redoya Payment API
+Documentation that explains how to implement your web app to the Redoya Payment API.
+<br /><br />
+Click to see the stable documentation. (Soon, awaiting GitHub Pages)
+<br /> <br />
+[Click to see the documentation developed.](./src/docs/Full.md)
