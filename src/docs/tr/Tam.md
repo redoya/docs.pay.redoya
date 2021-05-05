@@ -1,10 +1,13 @@
-﻿# Full Documentation
-## Base URL: https://pay.redoya.net
-## How does system work?
-You create an payment link as described below. The payment link has the required information such as price, success/fail redirection URL and is in test mode for creating the payment.
+﻿
+# Tam Dökümantasyon
+## Ana URL: https://pay.redoya.net
+## Sistem nasıl çalışıyor?
+Aşağıda belirtildiği gibi bir ödeme linki oluşturuyorsunuz. Ödeme linki şifreli bir şekilde fiyat, başarılı/iptal yönlendirme linki, "Test modunda mı?" gibi veriler taşır.
+<br />
 ``GET /checkout#orderToken#identifier``
-Then you redirect the user to the link. This created link is the payment page.
-Then user will complete the payment in the payment page and will be redirected to the specified successful/fail URL when the payment is/(not) processed. If you need to track an invoice, you can add specific query parameters such as invoiceId to the successful URL.
+<br />
+Ödeme linkini oluşturduktan sonra bu linke kullanıcıyı yönlendirirsiniz. Oluşturulan link ödeme sayfasıdır.
+Sonra kullanıcı ödeme sayfasında ödemeyi tamamladıktan ve ödeme işlendikten sonra başarılı/iptal URL'sine yönlendirilir. Eğer bir faturayı takip etmeniz gerekiyorsa başarılı URL'sine querystring olarak faturaId ekleyebilirsiniz.
 
 ## Table of Endpoints
 | METHOD | URL                              | BODY PARAMS |
@@ -12,25 +15,27 @@ Then user will complete the payment in the payment page and will be redirected t
 | GET    | /checkout#orderToken#identifier  | -           |
 | POST   | /api/v1/order/verify/:orderId    | identifier  |
 
-## Variable Definitions
+## Değişken Tanımlamaları
 ### Secret Key
-This is a random token which is only known by pay.redoya.net and vendor. Used while encrypting the order data. **THIS SECRET KEY WILL NEVER BE REQUESTED FROM YOU AND DO NOT SHARE THIS WITH ANYONE. If it's stolen, open a support ticket for requesting secret change ASAP.**
-### Identifier/Vendor Token
-This is a public token used to identify the vendor.
-### Order Token
-An encrypted string that contains specific order data as JSON. It must be encrypted with JSON Web Token, HS256.
+Bu yalnızca pay.redoya.net ve satıcının bildiği rastgele üretilmiş bir tokendir. Sipariş verisini şifrelemek ve deşifre etmek için kullanılır. **BU SECRET KEY SİZDEN HİÇBİR ZAMAN İSTENMEZ VE BUNU KİMSEYLE PAYLAŞMAYINIZ. Eğer çalındıysa, en kısa sürede yeni secret key talep etmek için destek talebi açınız.**
+### Identifier/Vendor/Satıcı Tokeni
+Bu herkese açık bir tokendir ve satıcıyı belirtmek için kullanılır. Satıcı ID gibi düşünebilirsiniz.
+### Order/Sipariş Tokeni
+JSON biçminde tutulan sipariş verisinin şifrelenmiş hâlidir. JSON Web Token, HS256 ile şifrelenmelidir.
 ### {order_id}
-This variable is used while creating orderData. You can use this variable to put incoming order id to anywhere you want in the successful/failed payment redirection URL. The order id is used to get the result of a payment.
+Bu değişken sipariş verisi (orderData) oluştururken kullanılır. Bu değişkeni gelecek sipariş ID'sini başarılı/iptal URL'sinde istediğiniz gere koyarak kullanabilirsiniz. Sipariş ID'si ödemenin durumunu kontrol etmek için kullanılır.
 
 ## How to create an order token?
 Click for PHP example (Soon)
+<br />
 Click for NodeJS example (Soon)
 
 ## API
 ### GET /checkout#orderToken#identifier
 Calculate the order token:
+<br />
 **orderData:**
-```json
+```jsonc
 {
   "price": priceInt, // min value: 3, max value: 1000
   // Float prices will be accepted in the next update.
@@ -42,16 +47,21 @@ Calculate the order token:
   // type: number (boolean is not supported yet), min: 0, max: 1
 }
 ```
+
 **orderToken:** ``JWT.sign(orderData, secret, { expiresIn: secondsInt });``
+<br />
 Combine the variables and create the payment link:
+<br />
+
 **identifier: You must request this from Redoya.**
+<br />
 ``https://pay.redoya.net/checkout#<orderToken>#<identifier>``
 
 ### POST /api/v1/order/verify/:orderId
 REQUEST
 ------------
 **Body parameters/schema:**
-```json
+```jsonc
 {
   "identifier": "You must request this from Redoya.",
 }
@@ -60,7 +70,7 @@ REQUEST
 RESPONSE
 --------------
 **On successful payment:**
-```json
+```jsonc
 {
   "orderId": "A string with 16 characters length.",
   "status": "success",
@@ -74,7 +84,7 @@ RESPONSE
 }
 ```
 **On failed payment:**
-```json
+```jsonc
 {
   "orderId": "A string with 16 characters length.",
   "status": "failed",
@@ -88,7 +98,7 @@ RESPONSE
 }
 ```
 **On error:**
-```json
+```jsonc
 {
   "name":  "MoleculerError",
   "message":  "A message that explains the error.",
@@ -107,7 +117,7 @@ RESPONSE
 ## Example Requests
 ### GET /checkout#orderToken#identifier
 **orderData:**
-```json
+```jsonc
 {
   "price": 15,
   "successfulURL": "https://redoya.net/odeme/basarili/{order_id}?invoiceId=123",
@@ -116,6 +126,12 @@ RESPONSE
 }
 ```
 **orderToken:** ``JWT.sign(orderData, secret, { expiresIn: 15 * 60 });``
+<br />
+
 **orderToken:** ``eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4``
+<br />
+
 **identifier/vendorToken:** ``eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDExNjE3NywiZXhwIjoxNjI3ODkyMTc3fQ.JFN1tDGnYfdz3RWQntGsl9wD8LgVXQ0WpgbverD3SCg``
+<br />
+
 **With this variables, the link will be:** https://pay.redoya.net/checkout#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcmljZSI6MTUsInN1Y2Nlc3NmdWxVUkwiOiJodHRwczovL3JlZG95YS5uZXQvb2RlbWUvYmFzYXJpbGkve29yZGVyX2lkfT9pbnZvaWNlSWQ9MTIzIiwiZmFpbFVSTCI6Imh0dHBzOi8vcmVkb3lhLm5ldC9vZGVtZS9pcHRhbC97b3JkZXJfaWR9P2ludm9pY2VJZD0xMjMiLCJpc0luVGVzdE1vZGUiOjEsImlhdCI6MTYyMDIwNTMxMn0.Bs91gdIkOPuvIVe1owxoSrrolSUdgJwHbaYqrmu47gM#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4
