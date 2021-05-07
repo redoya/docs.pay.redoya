@@ -25,9 +25,13 @@ An encrypted string that contains specific order data as JSON. It must be encryp
 This variable is used while creating orderData. You can use this variable to put incoming order id to anywhere you want in the successful/failed payment redirection URL. The order id is used to get the result of a payment.
 
 ## How to create an order token?
-Click for PHP example (Soon)
-<br />
-Click for NodeJS example (Soon)
+[Click to see the PHP example](https://github.com/redoya/php-demo.pay.redoya.net)
+<br  />
+
+For Core PHP you can use HMACSHA256 like in the source. [The Source: https://seegatesite.com/php-json-web-token-tutorial-for-beginners/](https://seegatesite.com/php-json-web-token-tutorial-for-beginners/)
+<br  />
+
+[Click to see the NodeJS example](https://github.com/redoya/node-pay-redoya/tree/main/example)
 
 ## API
 ### GET /checkout#orderToken#identifier
@@ -38,7 +42,7 @@ Calculate the order token:
 ```jsonc
 {
   "price": priceInt, // min value: 3, max value: 1000
-  // Float prices will be accepted in the next update.
+  // Float/Decimal prices are accepted. E.g. 5.56
   "successfulURL": "http://example.com/order/success/{order_id}?invoiceId=123",
   // type: string, min length: 10, max length: 1200
   "failURL": "https://redoya.net/odeme/iptal/{order_id}?invoiceId=123",

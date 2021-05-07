@@ -9,14 +9,14 @@ Aşağıda belirtildiği gibi bir ödeme linki oluşturuyorsunuz. Ödeme linki �
 Ödeme linkini oluşturduktan sonra bu linke kullanıcıyı yönlendirirsiniz. Oluşturulan link ödeme sayfasıdır.
 Sonra kullanıcı ödeme sayfasında ödemeyi tamamladıktan ve ödeme işlendikten sonra başarılı/iptal URL'sine yönlendirilir. Eğer bir faturayı takip etmeniz gerekiyorsa başarılı URL'sine querystring olarak faturaId ekleyebilirsiniz.
 
-## Table of Endpoints
-| METHOD | URL                              | BODY PARAMS |
-|--------|----------------------------------|-------------|
-| GET    | /checkout#orderToken#identifier  | -           |
-| POST   | /api/v1/order/verify/:orderId    | identifier  |
+## Endpointler Tablosu
+| METOD  | URL                              | BODY PARAMETRELERİ |
+|--------|----------------------------------|--------------------|
+| GET    | /checkout#orderToken#identifier  | -                  |
+| POST   | /api/v1/order/verify/:orderId    | identifier         |
 
 ## Değişken Tanımlamaları
-### Secret Key
+### Secret Key/Gizli anahtar
 Bu yalnızca pay.redoya.net ve satıcının bildiği rastgele üretilmiş bir tokendir. Sipariş verisini şifrelemek ve deşifre etmek için kullanılır. **BU SECRET KEY SİZDEN HİÇBİR ZAMAN İSTENMEZ VE BUNU KİMSEYLE PAYLAŞMAYINIZ. Eğer çalındıysa, en kısa sürede yeni secret key talep etmek için destek talebi açınız.**
 ### Identifier/Vendor/Satıcı Tokeni
 Bu herkese açık bir tokendir ve satıcıyı belirtmek için kullanılır. Satıcı ID gibi düşünebilirsiniz.
@@ -25,10 +25,14 @@ JSON biçminde tutulan sipariş verisinin şifrelenmiş hâlidir. JSON Web Token
 ### {order_id}
 Bu değişken sipariş verisi (orderData) oluştururken kullanılır. Bu değişkeni gelecek sipariş ID'sini başarılı/iptal URL'sinde istediğiniz gere koyarak kullanabilirsiniz. Sipariş ID'si ödemenin durumunu kontrol etmek için kullanılır.
 
-## How to create an order token?
-Click for PHP example (Soon)
+## Sipariş tokeni nasıl üretilir?
+[PHP örneği için tıklayın](https://github.com/redoya/php-demo.pay.redoya.net)
 <br />
-Click for NodeJS example (Soon)
+
+Core PHP için HMACSHA256 fonksiyonunu kaynaktaki gibi kullanabilirsiniz. [Kaynak: https://seegatesite.com/php-json-web-token-tutorial-for-beginners/](https://seegatesite.com/php-json-web-token-tutorial-for-beginners/)
+<br />
+
+[NodeJS örneği için tıklayın](https://github.com/redoya/node-pay-redoya/tree/main/example)
 
 ## API
 ### GET /checkout#orderToken#identifier
@@ -37,76 +41,76 @@ Calculate the order token:
 **orderData:**
 ```jsonc
 {
-  "price": priceInt, // min value: 3, max value: 1000
-  // Float prices will be accepted in the next update.
+  "price": priceFloat, // minimum değer: 3, maksimum değer: 1000
+  // Ondalık/virgüllü sayı girerek kuruş ayarlayabilirsiniz. (örn 5.56)
   "successfulURL": "http://example.com/order/success/{order_id}?invoiceId=123",
-  // type: string, min length: 10, max length: 1200
+  // tür: string, en kısa uzunluk: 10, en fazla uzunluk: 1200
   "failURL": "https://redoya.net/odeme/iptal/{order_id}?invoiceId=123",
-  // type: string, min length: 10, max length: 1200
+  // tür: string, min length: 10, max length: 1200
   "isInTestMode": 1,
-  // type: number (boolean is not supported yet), min: 0, max: 1
+  // tür: number (boolean türü henüz desteklenmiyor), minimum: 0, maksimum: 1
 }
 ```
 
 **orderToken:** ``JWT.sign(orderData, secret, { expiresIn: secondsInt });``
 <br />
-Combine the variables and create the payment link:
+Değişkenleri birleştirerek linki üretin:
 <br />
 
-**identifier: You must request this from Redoya.**
+**identifier: Redoya'ya destek talebi açarak talep edebilirsin.**
 <br />
 ``https://pay.redoya.net/checkout#<orderToken>#<identifier>``
 
 ### POST /api/v1/order/verify/:orderId
-REQUEST
+İSTEK
 ------------
-**Body parameters/schema:**
+**Body parametreleri/şeması:**
 ```jsonc
 {
-  "identifier": "You must request this from Redoya.",
+  "identifier": "Redoya'ya destek talebi açarak talep edebilirsin.",
 }
 ```
 
-RESPONSE
+YANIT
 --------------
-**On successful payment:**
+**Başarılı ödeme gerçekleştiyse:**
 ```jsonc
 {
-  "orderId": "A string with 16 characters length.",
+  "orderId": "16 karakter uzunluğunda bir string.",
   "status": "success",
-  "total_amount": "Money amount withheld from the customer (includes fee etc.). String and multiplied by 100",
+  "total_amount": "Müşterinin kartından kesilen paranın (banka komisyonu vb.ni de dahil eder) 100 ile çarpılmış string hâli",
   "payment_type": "card",
-  "payment_amount": "Money amount defined in the order. String and multiplied by 100",
+  "payment_amount": "Siparişte belirtilen ücretin 100 ile çarpılmış string hâli",
   "currency": "TL",
-  "testMode": "0 or 1",
-  "timestamp": timestampInSecondsInt, // Timestamp of when the payment made
-  "uses": countOfVerifyRequestsTheVendorHaveMadeInt,
+  "testMode": "0 veya 1",
+  "timestamp": timestampInSecondsInt, // Ödemenin gerçekleştiği timestamp
+  "uses": IntegerTüründeSatıcınınGönderdiğiDoğrulamaİsteğiSayısı,
 }
 ```
-**On failed payment:**
+**Başarısız ödeme gerçekleşmişse:**
 ```jsonc
 {
-  "orderId": "A string with 16 characters length.",
+  "orderId": "16 karakter uzunluğunda bir string.",
   "status": "failed",
-  "failed_reason_code": "From 0 to 99. Recieved from PayTR API.",
-  "failed_reason_msg": "Message that contains detailed information explains why the payment not accepted.",
+  "failed_reason_code": "0'dan 99'a kadar bir sayı, PayTR'den alınan hata kodudur.",
+  "failed_reason_msg": "Ödemenin neden kabul edilmediğini detaylıca açıklayan bir metindir.",
   "total_amount": "0",
   "payment_type": "card",
   "testMode": "0 or 1",
-  "timestamp": timestampInSecondsInt, // Timestamp of when the payment failed
-  "uses": countOfVerifyRequestsTheVendorHaveMadeInt,
+  "timestamp": timestampInSecondsInt, // Ödemede hata oluşan tarihin timestampi
+  "uses": IntegerTüründeSatıcınınGönderdiğiDoğrulamaİsteğiSayısı,
 }
 ```
 **On error:**
 ```jsonc
 {
   "name":  "MoleculerError",
-  "message":  "A message that explains the error.",
+  "message":  "Hatayı açıklayan bir mesaj.",
   "code":  400,
-  "type":  "TYPEOF_ERROR_WITH_SNAKE_CASE"
+  "type":  "HATANIN_TÜRÜ" // Her zaman SNAKE_CASE olarak gelir.
 }
 ```
-| Code | Type                  | Message                                   |
+| KODU | Type                  | Message                                   |
 |------|-----------------------|-------------------------------------------|
 | 400  | NOT_CONFIRMED_YET     | The order is not end up yet.              |
 | 400  | ORDER_TIMED_OUT       | It's been a long time since the order was created. |
@@ -114,7 +118,7 @@ RESPONSE
 | 500  | UNKNOWN_ERROR         | Unknown error! Contact the administrator. |
 
 
-## Example Requests
+## Örnek istekler
 ### GET /checkout#orderToken#identifier
 **orderData:**
 ```jsonc
@@ -134,4 +138,4 @@ RESPONSE
 **identifier/vendorToken:** ``eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDExNjE3NywiZXhwIjoxNjI3ODkyMTc3fQ.JFN1tDGnYfdz3RWQntGsl9wD8LgVXQ0WpgbverD3SCg``
 <br />
 
-**With this variables, the link will be:** https://pay.redoya.net/checkout#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcmljZSI6MTUsInN1Y2Nlc3NmdWxVUkwiOiJodHRwczovL3JlZG95YS5uZXQvb2RlbWUvYmFzYXJpbGkve29yZGVyX2lkfT9pbnZvaWNlSWQ9MTIzIiwiZmFpbFVSTCI6Imh0dHBzOi8vcmVkb3lhLm5ldC9vZGVtZS9pcHRhbC97b3JkZXJfaWR9P2ludm9pY2VJZD0xMjMiLCJpc0luVGVzdE1vZGUiOjEsImlhdCI6MTYyMDIwNTMxMn0.Bs91gdIkOPuvIVe1owxoSrrolSUdgJwHbaYqrmu47gM#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4
+**Bu değişkenlerle, link şu olacaktır:** https://pay.redoya.net/checkout#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcmljZSI6MTUsInN1Y2Nlc3NmdWxVUkwiOiJodHRwczovL3JlZG95YS5uZXQvb2RlbWUvYmFzYXJpbGkve29yZGVyX2lkfT9pbnZvaWNlSWQ9MTIzIiwiZmFpbFVSTCI6Imh0dHBzOi8vcmVkb3lhLm5ldC9vZGVtZS9pcHRhbC97b3JkZXJfaWR9P2ludm9pY2VJZD0xMjMiLCJpc0luVGVzdE1vZGUiOjEsImlhdCI6MTYyMDIwNTMxMn0.Bs91gdIkOPuvIVe1owxoSrrolSUdgJwHbaYqrmu47gM#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfa2V5IjoiMTg1ODM3OCIsIl9pZCI6IndlYnNpdGVzLzE4NTgzNzgiLCJfcmV2IjoiX2NRMHNiMi0tLS0iLCJlbWFpbCI6InVuaXR5dGhlbWFrZXJAZ21haWwuY29tIiwiZmlyc3ROYW1lIjoiSGFsaWwiLCJsYXN0TmFtZSI6IktBUkFCVUxVVCIsImFkZHJlc3MiOiJHw7Zrc3UgbWFoLiA1MzI4LiBjYWQuIG5vOjggVmFkaXRlcGUgQmHFn3DEsW5hciBzaXRlc2ksIEEyOCBBbmthcmEsIEV0aW1lc2d1dCwgMDY4MjAgVHVya2V5IiwicGhvbmUiOiIwNTU0MTMxMzQ3NSIsInNlY3JldCI6InNnUHViZEJWZE8zT2lINGRGM2dkWnJPUXQ1cDVXVXQxRENrU1JqWW1BOFRrVUlKV1pZYkVWbExSYzR1Nm1pN3UzU3JrcVVzTyIsIndobWNzX2lkIjoxMzAsImlhdCI6MTYyMDIwNTMxMiwiZXhwIjoxNjI3OTgxMzEyfQ.icnvXiaHBzJkt7Jty17FLuh_Q7HxpFHJgX6iQcnTAA4
